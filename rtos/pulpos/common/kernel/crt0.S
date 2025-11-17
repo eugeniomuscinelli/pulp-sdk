@@ -34,6 +34,14 @@ pos_init_entry:
     # Just re-route them to the right entry
     csrr    a0, 0xF14
     andi    a1, a0, 0x1f
+    #ifdef ARCHI_NO_FC
+    # PEs from 1 to 7 will go to sync_loop and wait. PE0 will reach them
+    # later after the pos_init_start. Then, they'll set up their stack into
+    # the L1 and jump to cluster_entry_stub
+    li t0, 0x10080000
+    sw x0, 0(t0)
+    bnez    a0,  sync_loop
+    #else 
     srli    a0, a0, 5
     li      a2, ARCHI_FC_CID
 #    bne     a0, a2, pos_pe_start
@@ -61,6 +69,14 @@ label0:
 
     /* Do all other initializations from C code */
     la   t0, pos_init_start
+    #ifdef ARCHI_NO_FC
+        csrr    a0, 0xF14
+        andi    a1, a0, 0x1f
+        li t0, 0x10080000
+        li t1, 0x1
+        sw t1, 0(t0)
+        j pe_start
+    #endif
     jalr x1, t0
 
 
@@ -145,4 +161,9 @@ pos_no_irq_handler:
 pos_semihosting_call:
     ebreak
     jr          ra
+
+sync_loop:
+    lw t1, 0(t0)
+    bnez    t1,  pe_start
+    j sync_loop
 

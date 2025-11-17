@@ -118,8 +118,9 @@ int pi_cluster_open(struct pi_device *cluster_dev)
 #if __PLATFORM__ != ARCHI_PLATFORM_FPGA && !defined(SKIP_PLL_INIT)
     {
         // Setup FLL
+        #ifndef ARCHI_NO_FC
         int init_freq = pos_fll_init(POS_FLL_CL);
-
+        #endif
         // Check if we have to restore the cluster frequency
         // otherwise just set it to the one returned by the fll
         int freq = pi_freq_get(PI_FREQ_DOMAIN_CL);
@@ -148,13 +149,14 @@ int pi_cluster_open(struct pi_device *cluster_dev)
     cluster_icache_ctrl_enable_set(ARCHI_CLUSTER_PERIPHERALS_GLOBAL_ADDR(cid) + ARCHI_ICACHE_CTRL_OFFSET, 0xFFFFFFFF);
 
     // Fetch all cores, they will directly jump to the PE loop waiting from orders through the dispatcher
+    #ifndef ARCHI_NO_FC
     for (int i=0; i<pi_cl_cluster_nb_pe_cores(); i++) 
     {
       GAP_WRITE(ARCHI_CLUSTER_PERIPHERALS_GLOBAL_ADDR(cid) + ARCHI_CLUSTER_CTRL_OFFSET, CLUSTER_CTRL_UNIT_BOOT_ADDR0_OFFSET + i*4, (int)_start);
     }
-
+    
     uint32_t core_mask = (1<<pi_cl_cluster_nb_pe_cores()) - 1;
-
+    #endif
 #ifdef ARCHI_CC_CORE_ID
     core_mask |= 1 << ARCHI_CC_CORE_ID;
     GAP_WRITE(ARCHI_CLUSTER_PERIPHERALS_GLOBAL_ADDR(cid) + ARCHI_CLUSTER_CTRL_OFFSET, CLUSTER_CTRL_UNIT_BOOT_ADDR0_OFFSET + ARCHI_CC_CORE_ID*4, (int)_start);

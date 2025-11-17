@@ -75,14 +75,16 @@ int test_entry()
 {
   int errors = 0;
 
-  printf("Starting test\n");
+  if (pi_core_id() == 0){
+    printf("Starting test\n");
+  }
 
   errors += test_task_sync();
 
-  if (errors)
-    printf("Test failure\n");
-  else
-    printf("Test success\n");
+  if (pi_core_id() == 0) {
+    if (errors) printf("Test failure\n");
+    else        printf("Test success\n");
+  }
 
   return errors;
 }

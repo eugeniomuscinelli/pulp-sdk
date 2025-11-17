@@ -54,9 +54,10 @@ pos_pe_start:
     mul     t2, t2, a0
     add     s7, s7, t2
     addi    s7, s7, POS_CLUSTER_T_CL_TASKS
-    li      s9, ARCHI_FC_ITC_ADDR + ITC_STATUS_SET_OFFSET
-    li      s8, 1<<POS_EVENT_FC_ENQUEUE
-
+    #ifndef ARCHI_NO_FC
+        li      s9, ARCHI_FC_ITC_ADDR + ITC_STATUS_SET_OFFSET
+        li      s8, 1<<POS_EVENT_FC_ENQUEUE
+    #endif
     la      s10, pos_set_slave_stack
     ori     s10, s10, 1
 
