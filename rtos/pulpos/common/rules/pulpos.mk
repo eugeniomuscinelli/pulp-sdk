@@ -1,4 +1,5 @@
 -include $(PULPOS_HOME)/rules/pulpos/targets/$(PULPOS_TARGET).mk
+-include $(PULP_SDK_HOME)/rtos/pulpos/pulp/rules/pulpos/targets/$(PULPOS_TARGET).mk
 
 define include_target
 

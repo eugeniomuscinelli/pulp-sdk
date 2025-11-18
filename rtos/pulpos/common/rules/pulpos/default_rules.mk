@@ -92,6 +92,10 @@ PULP_CFLAGS += -DARCHI_CLUSTER_NB_PE=$(CONFIG_NB_CLUSTER_PE)
 #override config_args += --config-opt=cluster/nb_pe=$(CONFIG_NB_CLUSTER_PE)
 endif
 
+ifdef CONFIG_NO_FC
+PULP_CFLAGS += -DARCHI_NO_FC=1
+endif
+
 ifdef CONFIG_IO_HOST
 PULP_CFLAGS += -DPOS_CONFIG_IO_HOST=$(CONFIG_IO_HOST)
 endif

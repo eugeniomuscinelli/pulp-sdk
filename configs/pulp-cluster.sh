@@ -1,5 +1,6 @@
 #! /bin/bash
 
+export PULPOS_TARGET=pulp_cluster
 
 if [  -n "${ZSH_VERSION:-}" ]; then 
 	DIR="$(readlink -f -- "${(%):-%x}")"
