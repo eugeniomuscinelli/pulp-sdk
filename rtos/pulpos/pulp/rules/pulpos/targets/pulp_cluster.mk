@@ -1,26 +1,29 @@
-ifdef USE_IBEX
-PULP_LDFLAGS      += 
-PULP_CFLAGS       +=  -D__ibex__ -U__riscv__ -UARCHI_CORE_HAS_PULPV2 -DRV_ISA_RV32
-PULP_ARCH_CFLAGS ?=  -march=rv32imc
-PULP_ARCH_LDFLAGS ?=  -march=rv32imc
-PULP_ARCH_OBJDFLAGS ?= -Mmarch=rv32imc
-else ifdef USE_CV32E40P
-PULP_LDFLAGS += 
-PULP_CFLAGS += -D__cv32e40p__ -U__riscv__ -UARCHI_CORE_HAS_PULPV2 
-PULP_ARCH_CFLAGS ?=  -march=rv32imcxgap9 -mnohwloop
-PULP_ARCH_LDFLAGS ?=  -march=rv32imcxgap9 -mnohwloop
-PULP_ARCH_OBJDFLAGS ?= -Mmarch=rv32imcxgap9 -mnohwloop
-else
+CONFIG_NB_CLUSTER_PE ?= 8
+
 PULP_LDFLAGS      += 
 PULP_CFLAGS       +=  -D__riscv__
-PULP_ARCH_CFLAGS ?=  -march=rv32imcxgap9
-PULP_ARCH_LDFLAGS ?=  -march=rv32imcxgap9
+
+ifneq ($(and $(PULP_RISCV_GCC_TOOLCHAIN),$(PULP_RISCV_LLVM_TOOLCHAIN)),)	
+$(error PULP_RISCV_GCC_TOOLCHAIN and PULP_RISCV_LLVM_TOOLCHAIN cannot be set both at the same time)
+endif
+
+ifdef PULP_RISCV_GCC_TOOLCHAIN
+PULP_ARCH_CFLAGS ?=  -march=rv32imcxgap9 -mPE=$(CONFIG_NB_CLUSTER_PE) -mFC=1
+PULP_ARCH_LDFLAGS ?=  -march=rv32imcxgap9 -mPE=$(CONFIG_NB_CLUSTER_PE) -mFC=1
 PULP_ARCH_OBJDFLAGS ?= -Mmarch=rv32imcxgap9
 endif
 
-PULP_CFLAGS    += -fdata-sections -ffunction-sections -include $(PULP_SDK_HOME)/rtos/pulpos/pulp/include/pos/chips/pulp_cluster/config.h -I$(PULP_SDK_HOME)/rtos/pulpos/pulp/include/chips/pulp_cluster
-PULP_OMP_CFLAGS    += -fopenmp -mnativeomp
-PULP_LDFLAGS += -nostartfiles -nostdlib -Wl,--gc-sections -L$(PULP_SDK_HOME)/rtos/pulpos/pulp/kernel -Tchips/pulp_cluster/link.ld -lgcc
+ifdef PULP_RISCV_LLVM_TOOLCHAIN
+PULP_ARCH_CFLAGS ?=   -target riscv32-unknown-elf -march=rv32imcxpulpv2 --sysroot=${PULP_RISCV_LLVM_TOOLCHAIN}/riscv32-unknown-elf -ffreestanding
+PULP_ARCH_LDFLAGS ?=  -march=rv32imcxpulpv2
+PULP_ARCH_OBJDFLAGS ?= -Mmarch=rv32imcxpulpv2
+endif
+
+PULP_CFLAGS    += -fdata-sections -ffunction-sections -include pos/chips/pulp/config.h -I$(PULPOS_PULP_HOME)/include/pos/chips/pulp -I$(PULP_EXT_LIBS)/include
+ifeq '$(CONFIG_OPENMP)' '1'
+PULP_CFLAGS    += -fopenmp -mnativeomp
+endif
+PULP_LDFLAGS += -nostartfiles -nostdlib -Wl,--gc-sections -L$(PULP_EXT_LIBS) -L$(PULPOS_PULP_HOME)/kernel -Tchips/pulp/link.ld -lgcc
 
 PULP_CC = riscv32-unknown-elf-gcc 
 PULP_AR ?= riscv32-unknown-elf-ar
@@ -30,7 +33,7 @@ PULP_OBJDUMP ?= riscv32-unknown-elf-objdump
 fc/archi=riscv
 pe/archi=riscv
 pulp_chip=pulp_cluster
-pulp_chip_family=pulp_cluster
+pulp_chip_family=pulp
 cluster/version=5
 fc_itc/version=1
 udma/cpi/version=1
@@ -41,30 +44,21 @@ udma/uart/version=1
 event_unit/version=3
 perf_counters=True
 fll/version=1
-padframe/version=1
+#padframe/version=1
 udma/spim/version=3
-gpio/version=3
+#gpio/version=2
 udma/archi=3
 udma/version=3
 soc_eu/version=2
 
+udma/hyper/version=3
+
+
 # FLL
-PULP_SRCS     += $(PULPOS_HOME)/kernel/fll-v$(fll/version).c
-PULP_SRCS     += $(PULPOS_HOME)/kernel/freq-domains.c
-PULP_SRCS     += $(PULPOS_HOME)/kernel/chips/pulp_cluster/soc.c
+PULP_SRCS     += kernel/fll-v$(fll/version).c
+PULP_SRCS     += kernel/freq-domains.c
+PULP_SRCS     += kernel/chips/pulp/soc.c
 
 
-include $(PULP_SDK_HOME)/rtos/pulpos/common/rules/pulpos/configs/default.mk
-
-ifeq '$(platform)' 'fpga'
-CONFIG_IO_UART=1
-endif
-
-include $(PULP_SDK_HOME)/rtos/pulpos/common/rules/pulpos/default_rules.mk
-
-ifndef gui
-vsim-flags = -c
-endif
-
-run:
-	vsim $(vsim-flags) -do "set  VSIM_PATH $(VSIM_PATH); source $(VSIM_PATH)/scripts/start.tcl"
+include $(PULPOS_HOME)/rules/pulpos/configs/default.mk
+include $(PULPOS_HOME)/rules/pulpos/default_rules.mk

@@ -46,6 +46,7 @@ pos_init_entry:
     li      a2, ARCHI_FC_CID
 #    bne     a0, a2, pos_pe_start
     beq     a0, a2, label0
+    #endif
     j      pos_pe_start
 label0:
 
@@ -75,7 +76,7 @@ label0:
         li t0, 0x10080000
         li t1, 0x1
         sw t1, 0(t0)
-        j pe_start
+        j pos_pe_start
     #endif
     jalr x1, t0
 
@@ -164,6 +165,6 @@ pos_semihosting_call:
 
 sync_loop:
     lw t1, 0(t0)
-    bnez    t1,  pe_start
+    bnez    t1,  pos_pe_start
     j sync_loop
 
