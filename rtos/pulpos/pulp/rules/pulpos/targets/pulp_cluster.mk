@@ -59,6 +59,10 @@ PULP_SRCS     += kernel/fll-v$(fll/version).c
 PULP_SRCS     += kernel/freq-domains.c
 PULP_SRCS     += kernel/chips/pulp/soc.c
 
+ifndef gui
+vsim-flags = -c
+endif
+
 
 include $(PULPOS_HOME)/rules/pulpos/configs/default.mk
 include $(PULPOS_HOME)/rules/pulpos/default_rules.mk
