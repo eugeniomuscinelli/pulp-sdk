@@ -23,7 +23,7 @@ PULP_CFLAGS    += -fdata-sections -ffunction-sections -include pos/chips/pulp/co
 ifeq '$(CONFIG_OPENMP)' '1'
 PULP_CFLAGS    += -fopenmp -mnativeomp
 endif
-PULP_LDFLAGS += -nostartfiles -nostdlib -Wl,--gc-sections -L$(PULP_EXT_LIBS) -L$(PULPOS_PULP_HOME)/kernel -Tchips/pulp/link.ld -lgcc
+PULP_LDFLAGS += -nostartfiles -nostdlib -Wl,--gc-sections -L$(PULP_EXT_LIBS) -L$(PULPOS_PULP_HOME)/kernel -Tchips/pulp_cluster/link.ld -lgcc
 
 PULP_CC = riscv32-unknown-elf-gcc 
 PULP_AR ?= riscv32-unknown-elf-ar

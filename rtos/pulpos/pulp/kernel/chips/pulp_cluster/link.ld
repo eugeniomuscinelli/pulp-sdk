@@ -3,8 +3,10 @@ OUTPUT_ARCH(riscv)
 ENTRY( _start )
 MEMORY
 {
-  L2           : ORIGIN = 0x1c000000, LENGTH = 0x0007fffc
-  L1           : ORIGIN = 0x10000000, LENGTH = 0x0000fffc
+  L2           : ORIGIN = 0x78000000, LENGTH = 0x0007fffc
+  L2_aliased   : ORIGIN = 0x00000004, LENGTH = 0x00003ffc
+  L1           : ORIGIN = 0x50000000, LENGTH = 0x0000fffc
+  L1_aliased   : ORIGIN = 0x00000004, LENGTH = 0x0000fffc
 }
 
 /*
@@ -177,7 +179,7 @@ MEMORY
    * Contains FC code
    */
 
-  .vectors MAX(0x1c008000,ALIGN(256)) :
+  .vectors MAX(ORIGIN(L2)+0x8000,ALIGN(256)) :
   {
     __irq_vector_base = .;
     KEEP(*(.vectors))
@@ -189,6 +191,8 @@ MEMORY
     _stext = .;
     *(.text)
     *(.text.*)
+    *(.text_l2)
+    *(.text_l2.*)
     _etext  =  .;
     *(.lit)
     *(.shdata)
@@ -206,7 +210,7 @@ MEMORY
    * Contains other data such as peripheral data and cluster code and data
    */
 
-  .l2_data MAX(0x1c010000,ALIGN(4)) :
+  .l2_data MAX(ORIGIN(L2)+0x10000,ALIGN(4)) :
   {
     . = ALIGN(4);
     __cluster_text_start = .;
@@ -221,7 +225,22 @@ MEMORY
     . = ALIGN(4);
   } > L2
 
-  .l1cluster_g : {
+  /* Following sections are keeping the cluster data
+   * in L2 until the cluster is powered up */
+
+  _l1_preload_start_inL2 = ALIGN(4);
+
+  .data_tiny_l1 :
+  {
+    . = ALIGN(4);
+    _l1_preload_start = .;
+    *(.data_tiny_l1)
+    *(.data_tiny_l1.*)
+    *(.data_alias_l1)
+    *(.data_alias_l1.*)
+  } > L1_aliased AT> L2
+
+  .l1cluster_g (ORIGIN(L1) + SIZEOF(.data_tiny_l1)) : {
     . = ALIGN(4);
     *(.heapsram)
     *(.heapsram.*)
@@ -236,7 +255,7 @@ MEMORY
     . = ALIGN(4);
   } > L1
 
-  .bss_l1 : {
+  .bss_l1 (ORIGIN(L1) + SIZEOF(.data_tiny_l1) + SIZEOF(.l1cluster_g)) : {
     . = ALIGN(4);
     *(.bss_l1)
     *(.bss_l1.*)
@@ -248,7 +267,7 @@ MEMORY
   __l2_shared_end = LOADADDR(.bss_l1) + SIZEOF(.bss_l1);
 
 
-
+  _l1_preload_size = SIZEOF(.data_tiny_l1) + SIZEOF(.l1cluster_g);
 
   __cluster_text_size = __cluster_text_end - __cluster_text_start;
 

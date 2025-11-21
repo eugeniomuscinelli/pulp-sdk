@@ -64,8 +64,8 @@ void pos_init_start()
 
   pos_irq_init();
 
+  #ifndef ARCHI_NO_FC
   pos_soc_init();
-  #ifdef ARCHI_NO_FC
   pos_soc_event_init();
   #endif
   // Initialize first the memory allocators and the utils so that they are
